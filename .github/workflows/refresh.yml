@@ -76,7 +76,11 @@ jobs:
           commit_message: "data: weekly refresh (${{ github.run_id }})"
           file_pattern: "data/processed/*.rds"
 
-      # ── 9. Deploy to shinyapps.io ────────────────────────────────────────────
+      # ── 9. Write .Renviron so shinyapps.io picks up the API key ─────────────
+      - name: Write .Renviron for deployment
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .Renviron
+
+      # ── 10. Deploy to shinyapps.io ───────────────────────────────────────────
       - name: Deploy to shinyapps.io
         run: |
           rsconnect::setAccountInfo(
@@ -84,9 +88,15 @@ jobs:
             token  = Sys.getenv("SHINYAPPS_TOKEN"),
             secret = Sys.getenv("SHINYAPPS_SECRET")
           )
+          # Explicitly include .Renviron (gitignored but needed on shinyapps.io)
+          app_files <- c(
+            list.files(".", recursive = TRUE, all.files = FALSE),
+            ".Renviron"
+          )
           rsconnect::deployApp(
             appDir      = ".",
             appName     = "couch-economy",
+            appFiles    = app_files,
             forceUpdate = TRUE,
             launch.browser = FALSE
           )
