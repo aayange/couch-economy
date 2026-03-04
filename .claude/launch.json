@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "couch-economy",
+      "runtimeExecutable": "Rscript",
+      "runtimeArgs": ["-e", "setwd('/Users/brighterayange/Desktop/Code & Data/Tidy Tuesday/couch-economy'); if(file.exists('.env')) readRenviron('.env'); shiny::runApp('.', launch.browser=FALSE, port=7777)"],
+      "port": 7777
+    }
+  ]
+}
