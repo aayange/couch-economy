@@ -48,7 +48,7 @@ jobs:
           install.packages(c(
             "httr2", "jsonlite", "wbstats", "readr", "dplyr", "tidyr",
             "purrr", "countrycode", "digest", "here", "glue", "scales",
-            "shiny", "bslib", "plotly", "ggplot2", "rsconnect"
+            "shiny", "bslib", "plotly", "ggplot2", "shinycssloaders", "rsconnect"
           ))
         shell: Rscript {0}
 
