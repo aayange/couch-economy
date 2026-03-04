@@ -84,6 +84,11 @@ jobs:
             token  = Sys.getenv("SHINYAPPS_TOKEN"),
             secret = Sys.getenv("SHINYAPPS_SECRET")
           )
+          # Push GEMINI_API_KEY into the shinyapps.io app environment
+          rsconnect::configureApp(
+            appName = "couch-economy",
+            envVars = c(GEMINI_API_KEY = Sys.getenv("GEMINI_API_KEY"))
+          )
           rsconnect::deployApp(
             appDir      = ".",
             appName     = "couch-economy",
