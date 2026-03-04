@@ -12,6 +12,9 @@ on:
     - cron: "0 6 * * 1"    # Every Monday at 06:00 UTC
   workflow_dispatch:        # Allow manual trigger from GitHub Actions tab
 
+permissions:
+  contents: write           # needed for git-auto-commit-action to push back
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -21,6 +24,8 @@ jobs:
       # ── 1. Check out the repository ─────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── 2. Set up R ─────────────────────────────────────────────────────────
       - name: Set up R
@@ -34,7 +39,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-4.4-${{ hashFiles('DESCRIPTION') }}
+          key: ${{ runner.os }}-r-4.4-${{ hashFiles('.github/workflows/refresh.yml') }}
           restore-keys: ${{ runner.os }}-r-4.4-
 
       # ── 4. Install dependencies ─────────────────────────────────────────────
@@ -42,7 +47,8 @@ jobs:
         run: |
           install.packages(c(
             "httr2", "jsonlite", "wbstats", "readr", "dplyr", "tidyr",
-            "purrr", "countrycode", "digest", "here", "glue", "scales"
+            "purrr", "countrycode", "digest", "here", "glue", "scales",
+            "shiny", "bslib", "plotly", "ggplot2", "rsconnect"
           ))
         shell: Rscript {0}
 
@@ -73,16 +79,16 @@ jobs:
       # ── 9. Deploy to shinyapps.io ────────────────────────────────────────────
       - name: Deploy to shinyapps.io
         run: |
-          install.packages("rsconnect")
           rsconnect::setAccountInfo(
             name   = Sys.getenv("SHINYAPPS_NAME"),
             token  = Sys.getenv("SHINYAPPS_TOKEN"),
             secret = Sys.getenv("SHINYAPPS_SECRET")
           )
           rsconnect::deployApp(
-            appDir   = ".",
-            appName  = "couch-economy",
-            forceUpdate = TRUE
+            appDir      = ".",
+            appName     = "couch-economy",
+            forceUpdate = TRUE,
+            launch.browser = FALSE
           )
         shell: Rscript {0}
         env:
