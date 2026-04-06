@@ -196,9 +196,8 @@ ui <- page_navbar(
         selectInput("ncd_outcome", "NCD outcome",
                     choices = ncd_choices, selected = ncd_choices[1]),
 
-        sliderInput("year_filter", "Year",
-                    min = min(years), max = max(years),
-                    value = max(years), step = 1, sep = ""),
+        selectInput("year_filter", "Year",
+                    choices = rev(years), selected = max(years)),
 
         hr(),
 
@@ -250,9 +249,9 @@ ui <- page_navbar(
             theme    = value_box_theme(bg = "#2A9D8F", fg = "white")
           ),
           value_box(
-            title    = "Most inactive country",
-            value    = textOutput("most_inactive", inline = TRUE),
-            showcase = icon("couch"),
+            title    = "GDP-inactivity correlation",
+            value    = textOutput("gdp_cor", inline = TRUE),
+            showcase = icon("arrow-trend-up"),
             theme    = value_box_theme(bg = "#E63946", fg = "white")
           )
         ),
@@ -406,7 +405,7 @@ server <- function(input, output, session) {
 
   filtered <- reactive({
     d <- df |>
-      filter(sex == input$sex_filter, year == input$year_filter)
+      filter(sex == input$sex_filter, year == as.numeric(input$year_filter))
     if (input$income_filter != "All")
       d <- d |> filter(income_level == input$income_filter)
     d |> filter(!is.na(inactivity_pct), !is.na(gdp_per_capita), !is.na(income_level))
@@ -432,10 +431,12 @@ server <- function(input, output, session) {
     if (is.nan(val)) "\u2014" else paste0(round(val, 1), "%")
   })
 
-  output$most_inactive <- renderText({
+  output$gdp_cor <- renderText({
     d <- filtered()
-    if (nrow(d) == 0) return("\u2014")
-    d |> slice_max(inactivity_pct, n = 1, with_ties = FALSE) |> pull(country_name)
+    if (nrow(d) < 3) return("\u2014")
+    r <- cor(log10(d$gdp_per_capita), d$inactivity_pct, use = "complete.obs")
+    if (is.na(r)) return("\u2014")
+    paste0("r = ", sprintf("%+.2f", r))
   })
 
   # ── Scatter plot ──────────────────────────────────────────────────────────
