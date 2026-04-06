@@ -73,7 +73,10 @@ jobs:
 
       # ── 8. Commit updated processed data ────────────────────────────────────
       - name: Pull latest before commit
-        run: git pull --rebase origin main
+        run: |
+          git stash --include-untracked
+          git pull --rebase origin main
+          git stash pop || true
 
       - name: Commit refreshed data
         uses: stefanzweifel/git-auto-commit-action@v5
