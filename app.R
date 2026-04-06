@@ -456,6 +456,9 @@ server <- function(input, output, session) {
         )
       )) +
       geom_point(alpha = 0.72) +
+      geom_smooth(aes(group = 1), method = "lm", formula = y ~ x,
+                  color = "#495057", linewidth = 0.7, linetype = "dashed",
+                  se = FALSE, inherit.aes = TRUE, show.legend = FALSE) +
       scale_x_log10(labels = label_dollar(scale_cut = cut_short_scale())) +
       scale_color_manual(values = income_colors, na.value = "grey70",
                          name = NULL) +
@@ -516,40 +519,51 @@ server <- function(input, output, session) {
       need(ncd_col %in% names(d), paste("Column", ncd_col, "not available."))
     )
 
-    ncd_max      <- max(d[[ncd_col]], na.rm = TRUE)
-    inact_max    <- max(d$inactivity_pct, na.rm = TRUE)
-    scale_factor <- if (is.finite(ncd_max) && is.finite(inact_max) && ncd_max > 0)
-                      inact_max / ncd_max else 1
+    # Split into non-NA subsets for each series
+    d_inact <- d |> filter(!is.na(inactivity_pct))
+    d_ncd   <- d |> filter(!is.na(.data[[ncd_col]]))
 
-    p <- d |>
-      ggplot(aes(x = year)) +
-      geom_line(aes(y = inactivity_pct, color = "Inactivity (%)"),
-                linewidth = 1.3) +
-      geom_point(aes(y = inactivity_pct, color = "Inactivity (%)"),
-                 size = 2.5) +
-      geom_line(aes(y = .data[[ncd_col]] * scale_factor, color = ncd_label),
-                linewidth = 1.3, linetype = "dashed") +
-      geom_point(aes(y = .data[[ncd_col]] * scale_factor, color = ncd_label),
-                 size = 2.2, shape = 17) +
-      scale_color_manual(
-        values = c("Inactivity (%)" = "#2E75B6", setNames("#E63946", ncd_label))
-      ) +
-      labs(x = NULL, y = "Physical inactivity (%)", color = NULL) +
-      theme_minimal(base_size = 12) +
-      theme(
-        legend.position  = "bottom",
-        panel.grid.minor = element_blank(),
-        axis.title       = element_text(size = 11, color = "#495057"),
-        legend.text      = element_text(size = 10),
-        plot.background  = element_rect(fill = "transparent", colour = NA)
-      )
-
-    ggplotly(p) |>
+    plot_ly() |>
+      add_lines(data = d_inact, x = ~year, y = ~inactivity_pct,
+                name = "Inactivity (%)", yaxis = "y",
+                line = list(color = "#2E75B6", width = 2.5),
+                hovertemplate = paste0(
+                  "<b>%{x}</b><br>Inactivity: %{y:.1f}%<extra></extra>"
+                )) |>
+      add_markers(data = d_inact, x = ~year, y = ~inactivity_pct,
+                  showlegend = FALSE, yaxis = "y",
+                  marker = list(color = "#2E75B6", size = 7),
+                  hoverinfo = "skip") |>
+      add_lines(data = d_ncd, x = ~year, y = as.formula(paste0("~", ncd_col)),
+                name = ncd_label, yaxis = "y2",
+                line = list(color = "#E63946", width = 2.5, dash = "dash"),
+                hovertemplate = paste0(
+                  "<b>%{x}</b><br>", ncd_label, ": %{y:.1f}%<extra></extra>"
+                )) |>
+      add_markers(data = d_ncd, x = ~year, y = as.formula(paste0("~", ncd_col)),
+                  showlegend = FALSE, yaxis = "y2",
+                  marker = list(color = "#E63946", size = 6, symbol = "triangle-up"),
+                  hoverinfo = "skip") |>
       layout(
-        legend = list(orientation = "h", y = -0.2, font = list(size = 10)),
-        margin = list(b = 60, t = 10, l = 10, r = 10),
+        xaxis = list(title = "", gridcolor = "#e9ecef", zeroline = FALSE),
+        yaxis = list(
+          title = list(text = "Physical inactivity (%)",
+                       font = list(size = 12, color = "#2E75B6")),
+          gridcolor = "#e9ecef", zeroline = FALSE,
+          tickfont = list(color = "#2E75B6")
+        ),
+        yaxis2 = list(
+          title = list(text = ncd_label,
+                       font = list(size = 12, color = "#E63946")),
+          overlaying = "y", side = "right", zeroline = FALSE,
+          tickfont = list(color = "#E63946"),
+          showgrid = FALSE
+        ),
+        legend = list(orientation = "h", y = -0.2, font = list(size = 11)),
+        margin = list(b = 60, t = 10, l = 60, r = 60),
         paper_bgcolor = "transparent",
-        plot_bgcolor  = "transparent"
+        plot_bgcolor  = "transparent",
+        hovermode = "x unified"
       ) |>
       config(displayModeBar = FALSE)
   })
