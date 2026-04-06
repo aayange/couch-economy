@@ -279,8 +279,8 @@ ui <- page_navbar(
                 "Bubble size = NCD outcome \u00b7 Colour = income group \u00b7 ",
                 tags$strong("Click a point"), " to load its trend"
               ),
-              downloadButton("dl_scatter", "PNG",
-                             class = "btn btn-sm btn-outline-secondary py-0 px-2",
+              downloadButton("dl_scatter", "",
+                             class = "btn btn-sm btn-outline-secondary py-0 px-1",
                              icon = icon("download"))
             )
           ),
@@ -300,8 +300,8 @@ ui <- page_navbar(
                 class = "text-muted",
                 "Solid line = physical inactivity \u00b7 Dashed = selected NCD outcome"
               ),
-              downloadButton("dl_trend", "PNG",
-                             class = "btn btn-sm btn-outline-secondary py-0 px-2",
+              downloadButton("dl_trend", "",
+                             class = "btn btn-sm btn-outline-secondary py-0 px-1",
                              icon = icon("download"))
             )
           )
@@ -311,19 +311,18 @@ ui <- page_navbar(
         card(
           card_header(
             class = "d-flex align-items-center justify-content-between",
-            "Country Brief",
             tags$span(
-              class = "badge bg-success fw-normal",
-              icon("robot", class = "me-1"), "Gemini 2.5 Flash Lite"
-            )
+              "Country Brief",
+              tags$span(
+                class = "badge bg-success fw-normal ms-2",
+                icon("robot", class = "me-1"), "Gemini 2.5 Flash Lite"
+              )
+            ),
+            downloadButton("dl_brief", "",
+                           class = "btn btn-sm btn-outline-secondary py-0 px-1",
+                           icon = icon("download"))
           ),
           uiOutput("brief_output"),
-          card_footer(
-            class = "text-end",
-            downloadButton("dl_brief", "Download Brief",
-                           class = "btn btn-sm btn-outline-secondary",
-                           icon = icon("file-lines"))
-          ),
           min_height = "110px"
         ),
 
@@ -491,7 +490,7 @@ server <- function(input, output, session) {
 
   output$scatter_plot <- renderPlotly({
     p <- scatter_gg()
-    ggplotly(p + theme(plot.title = element_blank()), tooltip = "text") |>
+    ggplotly(p + labs(title = NULL), tooltip = "text") |>
       layout(
         legend = list(orientation = "h", y = -0.2, font = list(size = 10)),
         margin = list(b = 60, t = 10, l = 10, r = 10),
