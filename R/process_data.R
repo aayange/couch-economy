@@ -159,7 +159,7 @@ if (nrow(missing_inactivity) > 0) {
 # Flag anomalies: inactivity > 3 SD from mean
 anomalies <- joined |>
   filter(sex == "Both") |>
-  mutate(z = scale(inactivity_pct)) |>
+  mutate(z = as.numeric(scale(inactivity_pct))) |>
   filter(abs(z) > 3)
 
 if (nrow(anomalies) > 0) {
