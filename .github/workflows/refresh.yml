@@ -72,6 +72,9 @@ jobs:
         shell: Rscript {0}
 
       # ── 8. Commit updated processed data ────────────────────────────────────
+      - name: Pull latest before commit
+        run: git pull --rebase origin main
+
       - name: Commit refreshed data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
