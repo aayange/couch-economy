@@ -128,7 +128,7 @@ if (!is.null(wb_raw)) {
 # ── 3. WHO GHO: Diabetes prevalence (age-standardised) ───────────────────────
 # Indicator: NCD_DIABETES_PREVALENCE_AGESTD — annual, sex-stratified like inactivity
 
-message("[3/4] Fetching WHO GHO diabetes prevalence (NCD_DIABETES_PREVALENCE_AGESTD)...")
+message("[3/5] Fetching WHO GHO diabetes prevalence (NCD_DIABETES_PREVALENCE_AGESTD)...")
 
 diabetes_raw <- tryCatch({
   raw_df <- fetch_who("NCD_DIABETES_PREVALENCE_AGESTD")
@@ -137,6 +137,7 @@ diabetes_raw <- tryCatch({
   raw_df |>
     filter(
       Dim1 %in% c("SEX_MLE", "SEX_FMLE", "SEX_BTSX"),
+      Dim2 == "AGEGROUP_YEARS18-PLUS",
       !is.na(NumericValue),
       !is.na(SpatialDim),
       nchar(as.character(SpatialDim)) == 3
