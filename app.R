@@ -396,7 +396,7 @@ server <- function(input, output, session) {
       filter(sex == input$sex_filter, year == input$year_filter)
     if (input$income_filter != "All")
       d <- d |> filter(income_level == input$income_filter)
-    d |> filter(!is.na(inactivity_pct), !is.na(gdp_per_capita))
+    d |> filter(!is.na(inactivity_pct), !is.na(gdp_per_capita), !is.na(income_level))
   })
 
   # ── Value boxes ───────────────────────────────────────────────────────────
