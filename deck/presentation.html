@@ -1026,7 +1026,7 @@ Ayange Ayangeakaa
 </div>
 </div></div>
 <aside class="notes">
-<p>Open with the core insight. The scatter plot shows 2022 data — every dot is a country. The trend line slopes upward: richer countries have higher inactivity. The correlation coefficient quantifies this. Point out Kuwait, UAE, and South Korea as extreme examples on the right side. This is the “why should you care” slide.</p>
+<p>So here’s the big idea. Each dot on this chart is a country in 2022. The x-axis is how rich the country is, the y-axis is how inactive. And the trend line goes up — meaning richer countries actually have more inactive people. You can see countries like Kuwait and the UAE way up at the top right. The r value tells us how strong that relationship is. I built a dashboard that lets you dig into this pattern yourself.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1063,7 +1063,7 @@ display:block!important;
 </ul>
 </div></div>
 <aside class="notes">
-<p>This slide makes the paradox concrete. The four income groups separate clearly and the gap has grown over time. High-income countries were already more inactive in 2000 and the divergence has continued. Mention that this mirrors urbanisation, mechanisation, and the shift to service economies. The gap number is the single most important statistic in the project.</p>
+<p>Now let me show you how big this gap really is. Each line is an income group. High-income countries are at the top, low-income at the bottom — and they’ve been pulling apart for twenty years. High-income countries average around 37% inactivity while low-income countries are around 15%. That’s a gap of over 20 percentage points, and it’s getting worse, not better. This pattern tracks with urbanisation and the shift to desk jobs and car-dependent lifestyles.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1149,7 +1149,7 @@ display:block!important;
 <p><strong>Final dataset:</strong> 195 countries, 23 years, 3 sex categories = <strong>13,455 rows</strong></p>
 </div></div>
 <aside class="notes">
-<p>Walk through the pipeline left to right. Emphasise that nothing is manually downloaded — all five data sources are fetched programmatically. The join key is ISO-3 country code by year by sex. WHO data is the skeleton (it determines which country-year-sex combinations exist), and World Bank, OWID, diabetes, and mortality are left-joined onto it. Mention that the pipeline runs end to end in about 30 seconds.</p>
+<p>Here’s how the data flows. I pull from three different APIs — WHO for the health data, World Bank for the economic data, and Our World in Data for obesity. Nothing is downloaded by hand. The fetch script grabs everything, the process script cleans it and joins it all together using country codes, and then the Shiny app reads that one processed file. The whole pipeline takes about 30 seconds to run. The final dataset is about 13,000 rows covering 195 countries over 23 years.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1194,7 +1194,7 @@ display:block!important;
 </ul>
 </div></div>
 <aside class="notes">
-<p>This slide maps to the rubric’s qualification criteria. For API: emphasise that the WHO OData API required building a pagination handler — it returns data in pages and you loop through nextLink URLs. For GenAI: the briefs aren’t just a chatbot — the model receives actual data values and synthesises them into a narrative. The tone toggle changes the prompt instruction. Caching by data hash means briefs auto-invalidate when data changes. For Automation: mention the self-healing rebase — if someone pushes to main between checkout and auto-commit, the workflow stashes, rebases, and pushes cleanly. That was a real bug we had to fix.</p>
+<p>So I’m targeting all three optional capabilities. For APIs — I built a pagination handler for the WHO API since it can return data in chunks. World Bank and OWID are simpler but still fetched programmatically. For the GenAI piece — when you pick a country, the app sends its actual numbers to Google Gemini and gets back a written summary. You can switch between a policy tone and a general public tone. It caches the results so you’re not hitting the API twice for the same thing. For automation — there’s a GitHub Actions job that runs every Monday. It fetches new data, processes it, and redeploys the app automatically. I don’t have to touch anything.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1248,7 +1248,7 @@ display:block!important;
 </tbody>
 </table>
 <aside class="notes">
-<p>This is the “real work” slide. The diabetes duplicate bug is worth highlighting — the WHO API returns both 18+ and 30+ age groups for the same country-year-sex, and without filtering, every left join doubles the dataset. We caught it because the trend chart showed a “fan” pattern with multiple lines per year. The Gini fill is a judgment call — Gini changes slowly, so bidirectional fill within country is defensible but imperfect. The dual y-axis issue was that the original approach rescaled the NCD outcome to the inactivity axis, making the NCD values unreadable in tooltips.</p>
+<p>This is where a lot of the real work happened. The trickiest one was the diabetes data — the WHO API quietly returns two age groups for every row, 18-plus and 30-plus. I didn’t notice at first, and it doubled my entire dataset when I joined. I caught it because the trend chart was showing a fan of lines instead of one clean line. The fix was just one filter, but finding the problem took a while. The Gini data is also tricky because it’s really sparse — about 15% missing even after filling gaps. And the dual y-axis issue was that my original chart rescaled everything to one axis, which made the tooltip values wrong.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1272,17 +1272,7 @@ display:block!important;
 <p>Scatter plot | Trend chart | Country briefs | Downloads</p>
 </div>
 <aside class="notes">
-<p>Demo flow (practice this!):</p>
-<ol type="1">
-<li>Start with the default view. Point out the four value boxes — especially the correlation coefficient. “This single number captures the paradox.”</li>
-<li>Show the scatter plot. Hover over a few countries. “Each bubble is a country. Size is the NCD outcome. The trend line slopes up — richer means more inactive.”</li>
-<li>Click Kuwait or UAE in the scatter. The trend chart updates. “Kuwait has 63% inactivity — the highest in the world. And it’s been climbing.”</li>
-<li>Switch NCD outcome from obesity to diabetes. Show how both plots update.</li>
-<li>Change the sex filter to Female. “Women are more inactive in almost every income group.”</li>
-<li>Generate a country brief for Nigeria. Show policy tone. Then switch to general public tone. “Same data, different audience. The model does real synthesis, not just reformatting.”</li>
-<li>Download the scatter plot PNG. Open it to show the high-resolution output.</li>
-</ol>
-<p>If wifi is slow, the brief is cached — it’ll load instantly for countries you’ve already generated.</p>
+<p>OK let me show you the app live. Up top you can see the value boxes — the correlation number updates as you change filters. Let me hover over some countries in the scatter plot… each bubble is sized by the NCD outcome. If I click on Kuwait here, the trend chart on the right updates to show Kuwait’s data over time. Let me switch the NCD outcome to diabetes — both charts update. Now if I change sex to Female, you can see women are more inactive in most countries. Let me generate a brief for Nigeria — this sends the actual data to Gemini and gets back a written summary. If I switch to general public tone, same data but simpler language. And I can download any of these as a file.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1336,7 +1326,7 @@ display:block!important;
 </tbody>
 </table>
 <aside class="notes">
-<p>If asked about the dual y-axis: “We originally used ggplot2 with a manual scale factor to overlay both series. It looked fine visually but the tooltips showed rescaled values — if you hovered over a diabetes point, it showed the wrong number. Switching to native plotly gave us independent axes with correct hover values.” If asked about Gemini vs other LLMs: “We chose Gemini 2.5 Flash Lite because it’s free, fast, and the API is simple — one POST request. The brief is structured with actual data values in the prompt, so the model isn’t hallucinating numbers.”</p>
+<p>A few of these are worth explaining. The dual y-axis — I originally tried to put both lines on one axis by rescaling, but when you hovered over a point, the numbers were wrong. So I switched to native plotly which lets you have two independent axes. The correlation in the value box — I wanted one number that immediately tells you “yes, richer really does mean more inactive,” and it updates when you change filters. The caching — first time you generate a brief it takes a few seconds, but after that it’s instant because it’s saved locally. And I picked Gemini because it’s free and the API is straightforward.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1371,7 +1361,7 @@ display:block!important;
 </ul>
 </div></div>
 <aside class="notes">
-<p>Be honest here. The biggest limitation is the ecological fallacy — we’re looking at country-level averages, not individuals. A country’s GDP going up doesn’t mean every person got richer and less active. Also acknowledge that the WHO estimates themselves are modelled from survey data and have wide uncertainty bands for some countries. For future work, the time animation would be the most compelling addition — watching the dots drift upward and rightward over 20 years would make the paradox visceral.</p>
+<p>I want to be upfront about what this can and can’t tell you. The WHO numbers are modelled estimates, not direct measurements, so for some smaller countries the uncertainty is pretty wide. And the big one — correlation is not causation. Just because richer countries are more inactive doesn’t mean money causes inactivity. There are a lot of other things going on — urbanisation, job types, infrastructure. If I had more time, the thing I’d most want to add is a time animation on the scatter plot so you can watch the dots move over 20 years. That would really make the pattern click.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1400,7 +1390,7 @@ display:block!important;
 <p>GLHLTH 562 — Spring 2026 Duke University</p>
 </div></div>
 <aside class="notes">
-<p>Thank the audience. Mention that the app is live and they can explore it on their own devices. The GitHub repo has the full pipeline documentation in the README. Open for questions.</p>
+<p>Thanks everyone. The app is live at that link if you want to try it on your own. The code is all on GitHub. Happy to take questions.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
