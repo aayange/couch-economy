@@ -273,11 +273,15 @@ ui <- page_navbar(
               )
             ),
             card_footer(
+              class = "d-flex align-items-center justify-content-between",
               tags$small(
                 class = "text-muted",
                 "Bubble size = NCD outcome \u00b7 Colour = income group \u00b7 ",
                 tags$strong("Click a point"), " to load its trend"
-              )
+              ),
+              downloadButton("dl_scatter", "PNG",
+                             class = "btn btn-sm btn-outline-secondary py-0 px-2",
+                             icon = icon("download"))
             )
           ),
 
@@ -291,10 +295,14 @@ ui <- page_navbar(
               )
             ),
             card_footer(
+              class = "d-flex align-items-center justify-content-between",
               tags$small(
                 class = "text-muted",
                 "Solid line = physical inactivity \u00b7 Dashed = selected NCD outcome"
-              )
+              ),
+              downloadButton("dl_trend", "PNG",
+                             class = "btn btn-sm btn-outline-secondary py-0 px-2",
+                             icon = icon("download"))
             )
           )
         ),
@@ -310,6 +318,12 @@ ui <- page_navbar(
             )
           ),
           uiOutput("brief_output"),
+          card_footer(
+            class = "text-end",
+            downloadButton("dl_brief", "Download Brief",
+                           class = "btn btn-sm btn-outline-secondary",
+                           icon = icon("file-lines"))
+          ),
           min_height = "110px"
         ),
 
@@ -427,7 +441,7 @@ server <- function(input, output, session) {
 
   # ── Scatter plot ──────────────────────────────────────────────────────────
 
-  output$scatter_plot <- renderPlotly({
+  scatter_gg <- reactive({
     d         <- filtered()
     ncd_col   <- input$ncd_outcome
     ncd_label <- names(ncd_choices)[ncd_choices == ncd_col]
@@ -442,7 +456,7 @@ server <- function(input, output, session) {
     validate(need(nrow(d_ncd) > 0,
       paste0("No ", ncd_label, " data for the selected year. Try a different year.")))
 
-    p <- d_ncd |>
+    d_ncd |>
       ggplot(aes(
         x     = gdp_per_capita,
         y     = inactivity_pct,
@@ -463,17 +477,21 @@ server <- function(input, output, session) {
       scale_color_manual(values = income_colors, na.value = "grey70",
                          name = NULL) +
       scale_size(range = c(2, 11), guide = "none") +
-      labs(x = "GDP per capita (log scale)", y = "Physical inactivity (%)") +
+      labs(x = "GDP per capita (log scale)", y = "Physical inactivity (%)",
+           title = paste("Physical Inactivity vs. GDP per Capita \u2014", input$year_filter)) +
       theme_minimal(base_size = 12) +
       theme(
         legend.position  = "bottom",
         panel.grid.minor = element_blank(),
         axis.title       = element_text(size = 11, color = "#495057"),
         legend.text      = element_text(size = 10),
-        plot.background  = element_rect(fill = "transparent", colour = NA)
+        plot.background  = element_rect(fill = "white", colour = NA)
       )
+  })
 
-    ggplotly(p, tooltip = "text") |>
+  output$scatter_plot <- renderPlotly({
+    p <- scatter_gg()
+    ggplotly(p + theme(plot.title = element_blank()), tooltip = "text") |>
       layout(
         legend = list(orientation = "h", y = -0.2, font = list(size = 10)),
         margin = list(b = 60, t = 10, l = 10, r = 10),
@@ -505,14 +523,19 @@ server <- function(input, output, session) {
     paste("Trend \u2014", country)
   })
 
-  output$trend_plot <- renderPlotly({
-    country   <- if (!is.null(selected_country())) selected_country() else input$brief_country
-    ncd_col   <- input$ncd_outcome
-    ncd_label <- names(ncd_choices)[ncd_choices == ncd_col]
-
+  trend_data <- reactive({
+    country <- if (!is.null(selected_country())) selected_country() else input$brief_country
     d <- df |>
       filter(country_name == country, sex == input$sex_filter) |>
       arrange(year)
+    list(data = d, country = country)
+  })
+
+  output$trend_plot <- renderPlotly({
+    td        <- trend_data()
+    d         <- td$data
+    ncd_col   <- input$ncd_outcome
+    ncd_label <- names(ncd_choices)[ncd_choices == ncd_col]
 
     validate(
       need(nrow(d) > 0, "No data for selected country."),
@@ -606,6 +629,67 @@ server <- function(input, output, session) {
       )
     }
   })
+
+  # ── Downloads ─────────────────────────────────────────────────────────────
+
+  output$dl_scatter <- downloadHandler(
+    filename = function() {
+      paste0("scatter_", input$year_filter, "_", input$sex_filter, ".png")
+    },
+    content = function(file) {
+      ggsave(file, plot = scatter_gg(), width = 10, height = 6, dpi = 300, bg = "white")
+    }
+  )
+
+  output$dl_trend <- downloadHandler(
+    filename = function() {
+      td <- trend_data()
+      paste0("trend_", gsub(" ", "_", td$country), ".png")
+    },
+    content = function(file) {
+      td        <- trend_data()
+      d         <- td$data
+      country   <- td$country
+      ncd_col   <- input$ncd_outcome
+      ncd_label <- names(ncd_choices)[ncd_choices == ncd_col]
+
+      d_long <- d |>
+        filter(!is.na(inactivity_pct) | !is.na(.data[[ncd_col]])) |>
+        tidyr::pivot_longer(
+          cols = c(inactivity_pct, all_of(ncd_col)),
+          names_to = "metric", values_to = "value"
+        ) |>
+        filter(!is.na(value)) |>
+        mutate(metric = ifelse(metric == "inactivity_pct", "Inactivity (%)", ncd_label))
+
+      p <- ggplot(d_long, aes(x = year, y = value, color = metric, linetype = metric)) +
+        geom_line(linewidth = 1.2) +
+        geom_point(size = 2.5) +
+        scale_color_manual(values = c("Inactivity (%)" = "#2E75B6", setNames("#E63946", ncd_label))) +
+        scale_linetype_manual(values = c("Inactivity (%)" = "solid", setNames("dashed", ncd_label))) +
+        labs(x = NULL, y = "%", color = NULL, linetype = NULL,
+             title = paste("Trend \u2014", country)) +
+        theme_minimal(base_size = 12) +
+        theme(
+          legend.position = "bottom",
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "white", colour = NA)
+        )
+
+      ggsave(file, plot = p, width = 8, height = 5, dpi = 300, bg = "white")
+    }
+  )
+
+  output$dl_brief <- downloadHandler(
+    filename = function() {
+      paste0("brief_", gsub(" ", "_", input$brief_country), "_", input$brief_tone, ".txt")
+    },
+    content = function(file) {
+      txt <- brief_text()
+      if (is.null(txt) || txt == "") txt <- "No brief generated yet."
+      writeLines(txt, file)
+    }
+  )
 }
 
 # ── Run ───────────────────────────────────────────────────────────────────────
