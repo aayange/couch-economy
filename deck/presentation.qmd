@@ -22,6 +22,7 @@ execute:
 library(dplyr)
 library(ggplot2)
 library(scales)
+library(tidyr)
 library(here)
 library(glue)
 
@@ -35,22 +36,27 @@ income_colors <- c(
 )
 ```
 
-## The Paradox
+## The Paradox {.smaller}
 
 ::: {.columns}
 
-::: {.column width="55%"}
+::: {.column width="50%"}
 
-- The world's **wealthiest countries** are often its **most physically inactive**
+<br>
+
+> As countries get richer, their populations stop moving.
+
+<br>
+
 - High incomes bring sedentary jobs, car-dependent cities, and screen-based leisure
-- The result: chronic diseases that cost lives and health systems trillions
-- **The Couch Economy** makes this paradox visible and explorable
+- The result: rising obesity, diabetes, and premature NCD mortality
+- **The Couch Economy** is an interactive dashboard that makes this paradox visible and explorable across 195 countries
 
 :::
 
-::: {.column width="45%"}
+::: {.column width="50%"}
 
-```{r paradox-scatter, fig.width=5.5, fig.height=4.5}
+```{r paradox-scatter, fig.width=6, fig.height=4.8}
 d <- df |>
   filter(sex == "Both", year == 2022,
          !is.na(inactivity_pct), !is.na(gdp_per_capita), !is.na(income_level))
@@ -60,13 +66,14 @@ r <- cor(log10(d$gdp_per_capita), d$inactivity_pct, use = "complete.obs")
 ggplot(d, aes(x = gdp_per_capita, y = inactivity_pct, color = income_level)) +
   geom_point(alpha = 0.7, size = 2.5) +
   geom_smooth(aes(group = 1), method = "lm", formula = y ~ x,
-              color = "#495057", linewidth = 0.7, linetype = "dashed",
+              color = "#495057", linewidth = 0.8, linetype = "dashed",
               se = FALSE) +
   scale_x_log10(labels = label_dollar(scale_cut = cut_short_scale())) +
   scale_color_manual(values = income_colors, name = NULL) +
-  annotate("text", x = 500, y = 58, label = glue("r = {round(r, 2)}"),
-           size = 4, fontface = "italic", color = "#495057", hjust = 0) +
-  labs(x = "GDP per capita (log scale)", y = "Physical inactivity (%)") +
+  annotate("text", x = 400, y = 60, label = glue("r = {sprintf('%+.2f', r)}"),
+           size = 5, fontface = "bold.italic", color = "#495057", hjust = 0) +
+  labs(x = "GDP per capita (log scale)", y = "Physical inactivity (%)",
+       caption = "Source: WHO GHO + World Bank, 2022") +
   theme_minimal(base_size = 13) +
   theme(legend.position = "bottom",
         panel.grid.minor = element_blank(),
@@ -77,36 +84,98 @@ ggplot(d, aes(x = gdp_per_capita, y = inactivity_pct, color = income_level)) +
 
 :::
 
-## Data Pipeline
+::: {.notes}
+Open with the core insight. The scatter plot shows 2022 data — every dot is a country. The trend line slopes upward: richer countries have higher inactivity. The correlation coefficient quantifies this. Point out Kuwait, UAE, and South Korea as extreme examples on the right side. This is the "why should you care" slide.
+:::
 
+## The Income Gap {.smaller}
+
+::: {.columns}
+
+::: {.column width="50%"}
+
+```{r income-gap, fig.width=6, fig.height=4.8}
+gap_data <- df |>
+  filter(sex == "Both", !is.na(income_level), !is.na(inactivity_pct)) |>
+  group_by(income_level, year) |>
+  summarise(avg_inactivity = mean(inactivity_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(gap_data, aes(x = year, y = avg_inactivity, color = income_level)) +
+  geom_line(linewidth = 1.3) +
+  geom_point(size = 2) +
+  scale_color_manual(values = income_colors, name = NULL) +
+  labs(x = NULL, y = "Avg physical inactivity (%)",
+       caption = "Source: WHO GHO, 2000-2022") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = "white", colour = NA))
 ```
-  [WHO GHO API]     [World Bank API]     [Our World in Data]
-  3 indicators       GDP + Gini            Obesity CSV
-       |                  |                     |
-       +------------------+---------------------+
-                          |
-                    R/fetch_data.R
-                (paginated API calls via httr2)
-                          |
-                          v  data/raw/*.rds
-                          |
-                    R/process_data.R
-              (join on ISO-3 x year x sex)
-                          |
-                          v  data/processed/couch_economy.rds
-                          |
-              +-----------+-----------+
-              |                       |
-           app.R              R/generate_brief.R
-      (Shiny dashboard)       (Gemini API -> brief)
-              |
-              v
-        shinyapps.io
-     (refreshed weekly via GitHub Actions)
+
+:::
+
+::: {.column width="50%"}
+
+<br>
+
+```{r gap-stats}
+latest <- gap_data |> filter(year == max(year))
+hi <- latest |> filter(income_level == "High income") |> pull(avg_inactivity)
+lo <- latest |> filter(income_level == "Low income") |> pull(avg_inactivity)
+gap <- round(hi - lo, 1)
 ```
+
+- High-income countries average **`r round(hi, 1)`%** inactivity
+- Low-income countries average **`r round(lo, 1)`%**
+- The gap: **`r gap` percentage points**
+- And it's been **widening** over two decades
+- This isn't random — it's structural
+
+:::
+
+:::
 
 ::: {.notes}
-Five data sources joined on ISO-3 country code by year and sex. Pipeline handles WHO OData pagination, World Bank Gini sparsity, and OWID CSV format differences.
+This slide makes the paradox concrete. The four income groups separate clearly and the gap has grown over time. High-income countries were already more inactive in 2000 and the divergence has continued. Mention that this mirrors urbanisation, mechanisation, and the shift to service economies. The gap number is the single most important statistic in the project.
+:::
+
+## Data Pipeline {.smaller}
+
+::: {.columns}
+
+::: {.column width="55%"}
+
+| Stage | Script | What happens |
+|-------|--------|-------------|
+| **Ingest** | `R/fetch_data.R` | Fetch 5 indicators from 3 APIs |
+| **Process** | `R/process_data.R` | Clean, standardise, join on ISO-3 x year x sex |
+| **Serve** | `app.R` | Interactive Shiny dashboard |
+| **Generate** | `R/generate_brief.R` | On-demand country briefs via Gemini |
+| **Automate** | `.github/workflows/refresh.yml` | Weekly cron: fetch, process, redeploy |
+
+:::
+
+::: {.column width="45%"}
+
+**Data sources:**
+
+| Source | Indicators |
+|--------|-----------|
+| WHO GHO | Inactivity, diabetes, NCD mortality |
+| World Bank | GDP per capita, Gini, income group |
+| OWID | Obesity prevalence |
+
+<br>
+
+**Final dataset:**
+195 countries, 23 years, 3 sex categories = **13,455 rows**
+
+:::
+
+:::
+
+::: {.notes}
+Walk through the pipeline left to right. Emphasise that nothing is manually downloaded — all five data sources are fetched programmatically. The join key is ISO-3 country code by year by sex. WHO data is the skeleton (it determines which country-year-sex combinations exist), and World Bank, OWID, diabetes, and mortality are left-joined onto it. Mention that the pipeline runs end to end in about 30 seconds.
 :::
 
 ## Three Capabilities
@@ -117,10 +186,11 @@ Five data sources joined on ISO-3 country code by year and sex. Pipeline handles
 
 ### API Integration
 
-- **WHO GHO** OData API (3 indicators, paginated)
-- **World Bank** via `wbstats`
-- **OWID** CSV download
-- All fetched programmatically at runtime
+- **WHO GHO** OData API with pagination handler
+- **World Bank** via `wbstats` R package
+- **OWID** programmatic CSV
+- 5 indicators from 3 sources
+- No manual downloads
 
 :::
 
@@ -128,10 +198,11 @@ Five data sources joined on ISO-3 country code by year and sex. Pipeline handles
 
 ### GenAI Model
 
-- **Google Gemini** (2.5 Flash Lite) generates country health briefs
-- Two audience tones: *policy* and *general public*
+- **Google Gemini** 2.5 Flash Lite
+- Generates 200-word country health briefs
+- Two tones: *policy* vs *general public*
 - Cached by country + data hash + tone
-- Functional, not decorative
+- Functional work, not decoration
 
 :::
 
@@ -139,87 +210,142 @@ Five data sources joined on ISO-3 country code by year and sex. Pipeline handles
 
 ### Automation
 
-- **GitHub Actions** cron job every Monday at 06:00 UTC
-- Fetches fresh data from all APIs
-- Reprocesses, invalidates stale briefs, commits, redeploys
+- **GitHub Actions** cron every Monday 06:00 UTC
+- Full pipeline: fetch, process, commit, redeploy
+- Stale brief cache invalidated automatically
 - Zero manual intervention
+- Self-healing: rebases on any intervening commits
 
 :::
 
-:::
-
-## Data Wrangling Challenges
-
-| Challenge | Solution |
-|-----------|----------|
-| WHO, World Bank, and OWID use different country code schemes | `countrycode` package standardises to ISO-3 |
-| WHO diabetes API returns two age groups (18+ and 30+), doubling rows on join | Filter to `AGEGROUP_YEARS18-PLUS` before join |
-| World Bank Gini index is ~15% missing | Forward/backward fill within country (`tidyr::fill`) |
-| WHO regional codes (AFR, AMR, ...) mixed in with country data | `countrycode` returns NA for non-countries; filter them out |
-| Venezuela and Ethiopia lack income classifications | Excluded from scatter (uses income colour), kept in trends and briefs |
-
-## Live Demo
-
-::: {.r-fit-text}
-[ayange.shinyapps.io/couch-economy](https://ayange.shinyapps.io/couch-economy/)
 :::
 
 ::: {.notes}
-Demo flow:
-1. Show default view — scatter plot with trend line, value boxes with correlation
-2. Change year, income filter, sex — show reactivity
-3. Click a country bubble — show trend chart updating
-4. Switch NCD outcome — show diabetes, then mortality
-5. Generate a country brief — show policy vs general tone
-6. Download a plot and a brief
+This slide maps to the rubric's qualification criteria. For API: emphasise that the WHO OData API required building a pagination handler — it returns data in pages and you loop through nextLink URLs. For GenAI: the briefs aren't just a chatbot — the model receives actual data values and synthesises them into a narrative. The tone toggle changes the prompt instruction. Caching by data hash means briefs auto-invalidate when data changes. For Automation: mention the self-healing rebase — if someone pushes to main between checkout and auto-commit, the workflow stashes, rebases, and pushes cleanly. That was a real bug we had to fix.
 :::
 
-## Design Decisions
+## Data Wrangling Challenges {.smaller}
 
-| Decision | Why |
-|----------|-----|
-| Dual y-axis on trend chart (native plotly) | Inactivity and NCD outcomes have different scales; rescaling to one axis hid true values |
-| GDP-inactivity correlation in value box | Communicates the paradox thesis in a single number |
-| Cached Gemini briefs (country + hash + tone) | Avoids redundant API calls; instant on repeat visits |
-| `bslib` + Bootstrap 5 | Responsive layout, professional polish without custom frontend |
-| OLS trend line on scatter | Makes the positive GDP-inactivity relationship immediately visible |
+| Challenge | Solution |
+|-----------|----------|
+| Three APIs use different country code schemes | `countrycode` package standardises everything to ISO-3 |
+| WHO diabetes API returns **two age groups** (18+ and 30+), silently doubling rows on join | Filter to `AGEGROUP_YEARS18-PLUS` before joining |
+| World Bank Gini index has ~15% missing values | Forward/backward fill within country (`tidyr::fill`) |
+| WHO regional codes (`AFR`, `AMR`, `EMR`, `EUR`, `WPR`) mixed in with country data | `countrycode` returns `NA` for non-countries; filtered out |
+| Venezuela and Ethiopia lack World Bank income classifications | Excluded from scatter plot; kept in trends and briefs |
+| Trend chart had mismatched scales (inactivity vs NCD outcome) | Rebuilt with native plotly dual y-axis instead of ggplot2 rescaling |
 
-## Limitations and Future Work
+::: {.notes}
+This is the "real work" slide. The diabetes duplicate bug is worth highlighting — the WHO API returns both 18+ and 30+ age groups for the same country-year-sex, and without filtering, every left join doubles the dataset. We caught it because the trend chart showed a "fan" pattern with multiple lines per year. The Gini fill is a judgment call — Gini changes slowly, so bidirectional fill within country is defensible but imperfect. The dual y-axis issue was that the original approach rescaled the NCD outcome to the inactivity axis, making the NCD values unreadable in tooltips.
+:::
 
-**Limitations:**
+## Live Demo {.center}
 
-- WHO inactivity data is **modelled estimates**, not direct measurements — confidence intervals are wide for some countries
-- Gini forward-fill assumes inequality changes slowly — may miss abrupt shifts
-- Correlation is not causation — the scatter shows association, not a causal pathway
-
-**Future work:**
-
-- Add a **regional comparison** panel (e.g., Sub-Saharan Africa vs. Europe)
-- Integrate **WHO STEPS survey** microdata for countries with primary data
-- Add **time animation** to the scatter plot to show how the paradox has evolved
-- Let users **compare two countries** side by side in the trend chart
-
-## Thank You
+<br><br>
 
 ::: {.r-fit-text}
 [ayange.shinyapps.io/couch-economy](https://ayange.shinyapps.io/couch-economy/)
 :::
+
+<br>
+
+::: {style="text-align: center; color: #6c757d; font-size: 0.9em;"}
+Scatter plot | Trend chart | Country briefs | Downloads
+:::
+
+::: {.notes}
+Demo flow (practice this!):
+
+1. Start with the default view. Point out the four value boxes — especially the correlation coefficient. "This single number captures the paradox."
+2. Show the scatter plot. Hover over a few countries. "Each bubble is a country. Size is the NCD outcome. The trend line slopes up — richer means more inactive."
+3. Click Kuwait or UAE in the scatter. The trend chart updates. "Kuwait has 63% inactivity — the highest in the world. And it's been climbing."
+4. Switch NCD outcome from obesity to diabetes. Show how both plots update.
+5. Change the sex filter to Female. "Women are more inactive in almost every income group."
+6. Generate a country brief for Nigeria. Show policy tone. Then switch to general public tone. "Same data, different audience. The model does real synthesis, not just reformatting."
+7. Download the scatter plot PNG. Open it to show the high-resolution output.
+
+If wifi is slow, the brief is cached — it'll load instantly for countries you've already generated.
+:::
+
+## Design Decisions {.smaller}
+
+| Decision | Rationale |
+|----------|-----------|
+| Dual y-axis trend chart (native plotly) | Inactivity and NCD outcomes have different scales; rescaling to one axis produced misleading tooltips |
+| GDP-inactivity correlation in value box | Communicates the project's thesis in a single number that updates with filters |
+| Cached Gemini briefs (country + hash + tone) | Avoids redundant API calls; instant on repeat visits; auto-invalidates when data changes |
+| `bslib` + Bootstrap 5 layout | Responsive on mobile and desktop without custom CSS framework |
+| OLS trend line on scatter | Makes the positive GDP-inactivity relationship immediately visible to non-technical users |
+| Year as dropdown (not slider) | Consistent with other filter inputs; faster to select a specific year |
+
+::: {.notes}
+If asked about the dual y-axis: "We originally used ggplot2 with a manual scale factor to overlay both series. It looked fine visually but the tooltips showed rescaled values — if you hovered over a diabetes point, it showed the wrong number. Switching to native plotly gave us independent axes with correct hover values." If asked about Gemini vs other LLMs: "We chose Gemini 2.5 Flash Lite because it's free, fast, and the API is simple — one POST request. The brief is structured with actual data values in the prompt, so the model isn't hallucinating numbers."
+:::
+
+## Limitations and Future Work {.smaller}
 
 ::: {.columns}
 
 ::: {.column width="50%"}
 
-**Source code:**
-[github.com/aayange/couch-economy](https://github.com/aayange/couch-economy)
+### Limitations
+
+- WHO inactivity estimates are **modelled**, not directly measured — confidence intervals are wide for some countries
+- Gini forward-fill assumes inequality changes slowly — may miss abrupt economic shifts
+- **Correlation is not causation** — the scatter shows association, not a causal mechanism
+- Gemini briefs can occasionally overinterpret sparse data for small countries
 
 :::
 
 ::: {.column width="50%"}
 
-**Course:**
+### Future Work
+
+- **Regional comparison panel** — compare Sub-Saharan Africa vs Europe side by side
+- **Time animation** on the scatter plot to show how the paradox has evolved since 2000
+- **Country comparison mode** — select two countries and see trends overlaid
+- **WHO STEPS microdata** integration for countries with primary survey data
+- **Confidence interval bands** on the trend chart using WHO's `Low` and `High` columns
+
+:::
+
+:::
+
+::: {.notes}
+Be honest here. The biggest limitation is the ecological fallacy — we're looking at country-level averages, not individuals. A country's GDP going up doesn't mean every person got richer and less active. Also acknowledge that the WHO estimates themselves are modelled from survey data and have wide uncertainty bands for some countries. For future work, the time animation would be the most compelling addition — watching the dots drift upward and rightward over 20 years would make the paradox visceral.
+:::
+
+## Thank You {.center}
+
+<br>
+
+::: {.r-fit-text}
+[ayange.shinyapps.io/couch-economy](https://ayange.shinyapps.io/couch-economy/)
+:::
+
+<br>
+
+::: {.columns}
+
+::: {.column width="50%" style="text-align: center;"}
+
+**Source code**
+
+[github.com/aayange/couch-economy](https://github.com/aayange/couch-economy)
+
+:::
+
+::: {.column width="50%" style="text-align: center;"}
+
+**Course**
+
 GLHLTH 562 — Spring 2026
 Duke University
 
 :::
 
+:::
+
+::: {.notes}
+Thank the audience. Mention that the app is live and they can explore it on their own devices. The GitHub repo has the full pipeline documentation in the README. Open for questions.
 :::
