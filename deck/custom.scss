@@ -1,0 +1,34 @@
+/*-- scss:defaults --*/
+
+$body-bg: #ffffff;
+$body-color: #2c3e50;
+$link-color: #2E75B6;
+$font-family-sans-serif: "Inter", -apple-system, sans-serif;
+$presentation-heading-color: #1A3C5E;
+$code-block-bg: #f8f9fa;
+
+/*-- scss:rules --*/
+
+.reveal h2 {
+  border-bottom: 3px solid #2E75B6;
+  padding-bottom: 0.3em;
+}
+
+.reveal table {
+  font-size: 0.75em;
+}
+
+.reveal table th {
+  background-color: #1A3C5E;
+  color: white;
+  font-weight: 600;
+}
+
+.reveal table td {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.reveal pre code {
+  font-size: 0.7em;
+  line-height: 1.4;
+}
