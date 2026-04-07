@@ -48,9 +48,17 @@ income_colors <- c(
 
 <br>
 
+::: {.fragment .fade-in}
 - High incomes bring sedentary jobs, car-dependent cities, and screen-based leisure
+:::
+
+::: {.fragment .fade-in}
 - The result: rising obesity, diabetes, and premature NCD mortality
+:::
+
+::: {.fragment .fade-in}
 - **The Couch Economy** is an interactive dashboard that makes this paradox visible and explorable across 195 countries
+:::
 
 :::
 
@@ -85,7 +93,13 @@ ggplot(d, aes(x = gdp_per_capita, y = inactivity_pct, color = income_level)) +
 :::
 
 ::: {.notes}
-So here's the big idea. Each dot on this chart is a country in 2022. The x-axis is how rich the country is, the y-axis is how inactive. And the trend line goes up — meaning richer countries actually have more inactive people. You can see countries like Kuwait and the UAE way up at the top right. The r value tells us how strong that relationship is. I built a dashboard that lets you dig into this pattern yourself.
+Here's a question worth sitting with: what if getting richer is making us sicker? Look at this chart on the right — each dot is a country in 2022. GDP per capita on the x-axis, physical inactivity on the y. And the trend line goes up. The wealthiest nations on Earth are the most inactive. Kuwait, Saudi Arabia, the UAE — way up at the top right.
+
+[CLICK] Why? Because wealth brings sedentary jobs, car-dependent cities, and screen-based leisure. The infrastructure of prosperity is designed for sitting.
+
+[CLICK] And the consequences are enormous — rising obesity, diabetes, and premature death from non-communicable diseases. This is a pattern that matters to anyone in global health policy, NCD prevention, urban planning, or health economics.
+
+[CLICK] That's why I built The Couch Economy — an interactive dashboard that makes this paradox visible and explorable across 195 countries and two decades of data.
 :::
 
 ## The Income Gap {.smaller}
@@ -125,18 +139,42 @@ lo <- latest |> filter(income_level == "Low income") |> pull(avg_inactivity)
 gap <- round(hi - lo, 1)
 ```
 
+::: {.fragment .fade-in}
 - High-income countries average **`r round(hi, 1)`%** inactivity
+:::
+
+::: {.fragment .fade-in}
 - Low-income countries average **`r round(lo, 1)`%**
+:::
+
+::: {.fragment .highlight-red}
 - The gap: **`r gap` percentage points**
+:::
+
+::: {.fragment .fade-in}
 - And it's been **widening** over two decades
+:::
+
+::: {.fragment .fade-up}
 - This isn't random — it's structural
+:::
 
 :::
 
 :::
 
 ::: {.notes}
-Now let me show you how big this gap really is. Each line is an income group. High-income countries are at the top, low-income at the bottom — and they've been pulling apart for twenty years. High-income countries average around 37% inactivity while low-income countries are around 15%. That's a gap of over 20 percentage points, and it's getting worse, not better. This pattern tracks with urbanisation and the shift to desk jobs and car-dependent lifestyles.
+Now let me show you how big this gap really is. Look at the chart on the left — each line is an income group, tracked over two decades. High-income countries sit at the top, low-income at the bottom, and they've been pulling apart.
+
+[CLICK] High-income countries average around 37% inactivity.
+
+[CLICK] Low-income countries? Around 15%.
+
+[CLICK] That's a gap of over 20 percentage points — and I want you to sit with that number for a second.
+
+[CLICK] This gap has been widening for twenty years. It's not closing. It tracks with urbanisation, the shift to desk jobs, and car-dependent infrastructure.
+
+[CLICK] This isn't random variation — it's structural. The way wealthy economies are built produces inactivity at scale.
 :::
 
 ## Data Pipeline {.smaller}
@@ -182,7 +220,7 @@ Here's how the data flows. I pull from three different APIs — WHO for the heal
 
 ::: {.columns}
 
-::: {.column width="33%"}
+::: {.column width="33%" .fragment .fade-right}
 
 ### API Integration
 
@@ -194,7 +232,7 @@ Here's how the data flows. I pull from three different APIs — WHO for the heal
 
 :::
 
-::: {.column width="33%"}
+::: {.column width="33%" .fragment .fade-right}
 
 ### GenAI Model
 
@@ -206,7 +244,7 @@ Here's how the data flows. I pull from three different APIs — WHO for the heal
 
 :::
 
-::: {.column width="33%"}
+::: {.column width="33%" .fragment .fade-right}
 
 ### Automation
 
@@ -221,7 +259,13 @@ Here's how the data flows. I pull from three different APIs — WHO for the heal
 :::
 
 ::: {.notes}
-So I'm targeting all three optional capabilities. For APIs — I built a pagination handler for the WHO API since it can return data in chunks. World Bank and OWID are simpler but still fetched programmatically. For the GenAI piece — when you pick a country, the app sends its actual numbers to Google Gemini and gets back a written summary. You can switch between a policy tone and a general public tone. It caches the results so you're not hitting the API twice for the same thing. For automation — there's a GitHub Actions job that runs every Monday. It fetches new data, processes it, and redeploys the app automatically. I don't have to touch anything.
+The dashboard integrates three technical capabilities. Let me walk through each one.
+
+[CLICK] First, API integration. The app pulls from three live data sources — WHO, World Bank, and Our World in Data. The WHO API was the trickiest because it paginates results, so I built a handler that loops through all the pages automatically. Nothing is downloaded by hand.
+
+[CLICK] Second, a generative AI component. When you select a country, the app sends its actual numbers to Google Gemini and gets back a written health brief. You can toggle between a policy tone and a general public tone. Results are cached by country, data hash, and tone — so you're not hitting the API twice for the same request.
+
+[CLICK] Third, automation. A GitHub Actions workflow runs every Monday at 6 AM UTC. It fetches fresh data, processes it, and redeploys the app. I don't have to touch anything — the dashboard stays current on its own.
 :::
 
 ## Data Wrangling Challenges {.smaller}
@@ -239,22 +283,26 @@ So I'm targeting all three optional capabilities. For APIs — I built a paginat
 This is where a lot of the real work happened. The trickiest one was the diabetes data — the WHO API quietly returns two age groups for every row, 18-plus and 30-plus. I didn't notice at first, and it doubled my entire dataset when I joined. I caught it because the trend chart was showing a fan of lines instead of one clean line. The fix was just one filter, but finding the problem took a while. The Gini data is also tricky because it's really sparse — about 15% missing even after filling gaps. And the dual y-axis issue was that my original chart rescaled everything to one axis, which made the tooltip values wrong.
 :::
 
-## Live Demo {.center}
+## Live Demo {.center auto-animate="true"}
 
 <br><br>
 
-::: {.r-fit-text}
+::: {.r-fit-text .fragment .fade-down}
 [ayange.shinyapps.io/couch-economy](https://ayange.shinyapps.io/couch-economy/)
 :::
 
 <br>
 
-::: {style="text-align: center; color: #6c757d; font-size: 0.9em;"}
+::: {.fragment .fade-up style="text-align: center; color: #6c757d; font-size: 0.9em;"}
 Scatter plot | Trend chart | Country briefs | Downloads
 :::
 
 ::: {.notes}
-OK let me show you the app live. Up top you can see the value boxes — the correlation number updates as you change filters. Let me hover over some countries in the scatter plot... each bubble is sized by the NCD outcome. If I click on Kuwait here, the trend chart on the right updates to show Kuwait's data over time. Let me switch the NCD outcome to diabetes — both charts update. Now if I change sex to Female, you can see women are more inactive in most countries. Let me generate a brief for Nigeria — this sends the actual data to Gemini and gets back a written summary. If I switch to general public tone, same data but simpler language. And I can download any of these as a file.
+Now let me show you the real thing.
+
+[CLICK] Here's the link — let me switch over to the live app.
+
+[CLICK] You can see there are four main features: the scatter plot, the trend chart, the AI-generated country briefs, and data downloads. Let me walk through each one. Up top, the value boxes — notice the correlation updates as I change filters. Let me hover over some countries in the scatter plot... each bubble is sized by the NCD outcome. If I click on Kuwait, the trend chart updates to show Kuwait over time. Let me switch to diabetes — both charts respond. Now if I filter to Female, you can see women are more inactive in most countries. Let me generate a brief for Nigeria — this sends the actual data to Gemini and gets back a written summary. Switch to general public tone — same data, simpler language. And any of these can be downloaded as a file.
 :::
 
 ## Design Decisions {.smaller}
@@ -280,10 +328,12 @@ A few of these are worth explaining. The dual y-axis — I originally tried to p
 
 ### Limitations
 
+::: {.fragment .fade-in fragment-index=1}
 - WHO inactivity estimates are **modelled**, not directly measured — confidence intervals are wide for some countries
 - Gini forward-fill assumes inequality changes slowly — may miss abrupt economic shifts
 - **Correlation is not causation** — the scatter shows association, not a causal mechanism
 - Gemini briefs can occasionally overinterpret sparse data for small countries
+:::
 
 :::
 
@@ -291,21 +341,27 @@ A few of these are worth explaining. The dual y-axis — I originally tried to p
 
 ### Future Work
 
+::: {.fragment .fade-in fragment-index=2}
 - **Regional comparison panel** — compare Sub-Saharan Africa vs Europe side by side
 - **Time animation** on the scatter plot to show how the paradox has evolved since 2000
 - **Country comparison mode** — select two countries and see trends overlaid
 - **WHO STEPS microdata** integration for countries with primary survey data
 - **Confidence interval bands** on the trend chart using WHO's `Low` and `High` columns
+:::
 
 :::
 
 :::
 
 ::: {.notes}
-I want to be upfront about what this can and can't tell you. The WHO numbers are modelled estimates, not direct measurements, so for some smaller countries the uncertainty is pretty wide. And the big one — correlation is not causation. Just because richer countries are more inactive doesn't mean money causes inactivity. There are a lot of other things going on — urbanisation, job types, infrastructure. If I had more time, the thing I'd most want to add is a time animation on the scatter plot so you can watch the dots move over 20 years. That would really make the pattern click.
+I want to be upfront about what this can and can't tell you.
+
+[CLICK] The WHO numbers are modelled estimates, not direct measurements — so uncertainty is wide for some smaller countries. The Gini data has gaps I had to fill. And the big one: correlation is not causation. Richer countries are more inactive, but that doesn't mean money directly causes inactivity. Urbanisation, job types, infrastructure — there's a lot going on.
+
+[CLICK] If I had more time, the thing I'd most want to add is a time animation on the scatter plot — watching the dots shift over 20 years would really make the pattern click. I'd also love to add country comparisons and confidence interval bands from the WHO data.
 :::
 
-## Thank You {.center}
+## Thank You {.center auto-animate="true"}
 
 <br>
 

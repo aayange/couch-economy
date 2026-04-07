@@ -1009,11 +1009,21 @@ Ayange Ayangeakaa
 <p>As countries get richer, their populations stop moving.</p>
 </blockquote>
 <p><br></p>
+<div class="fragment fade-in">
 <ul>
 <li>High incomes bring sedentary jobs, car-dependent cities, and screen-based leisure</li>
+</ul>
+</div>
+<div class="fragment fade-in">
+<ul>
 <li>The result: rising obesity, diabetes, and premature NCD mortality</li>
+</ul>
+</div>
+<div class="fragment fade-in">
+<ul>
 <li><strong>The Couch Economy</strong> is an interactive dashboard that makes this paradox visible and explorable across 195 countries</li>
 </ul>
+</div>
 </div><div class="column" style="width:50%;">
 <div class="cell">
 <div class="cell-output-display">
@@ -1026,7 +1036,10 @@ Ayange Ayangeakaa
 </div>
 </div></div>
 <aside class="notes">
-<p>So here’s the big idea. Each dot on this chart is a country in 2022. The x-axis is how rich the country is, the y-axis is how inactive. And the trend line goes up — meaning richer countries actually have more inactive people. You can see countries like Kuwait and the UAE way up at the top right. The r value tells us how strong that relationship is. I built a dashboard that lets you dig into this pattern yourself.</p>
+<p>Here’s a question worth sitting with: what if getting richer is making us sicker? Look at this chart on the right — each dot is a country in 2022. GDP per capita on the x-axis, physical inactivity on the y. And the trend line goes up. The wealthiest nations on Earth are the most inactive. Kuwait, Saudi Arabia, the UAE — way up at the top right.</p>
+<p>[CLICK] Why? Because wealth brings sedentary jobs, car-dependent cities, and screen-based leisure. The infrastructure of prosperity is designed for sitting.</p>
+<p>[CLICK] And the consequences are enormous — rising obesity, diabetes, and premature death from non-communicable diseases. This is a pattern that matters to anyone in global health policy, NCD prevention, urban planning, or health economics.</p>
+<p>[CLICK] That’s why I built The Couch Economy — an interactive dashboard that makes this paradox visible and explorable across 195 countries and two decades of data.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1054,16 +1067,39 @@ display:block!important;
 </div>
 </div><div class="column" style="width:50%;">
 <p><br></p>
+<div class="fragment fade-in">
 <ul>
 <li>High-income countries average <strong>33.7%</strong> inactivity</li>
+</ul>
+</div>
+<div class="fragment fade-in">
+<ul>
 <li>Low-income countries average <strong>15.1%</strong></li>
+</ul>
+</div>
+<div class="fragment highlight-red">
+<ul>
 <li>The gap: <strong>18.6 percentage points</strong></li>
+</ul>
+</div>
+<div class="fragment fade-in">
+<ul>
 <li>And it’s been <strong>widening</strong> over two decades</li>
+</ul>
+</div>
+<div class="fragment fade-up">
+<ul>
 <li>This isn’t random — it’s structural</li>
 </ul>
+</div>
 </div></div>
 <aside class="notes">
-<p>Now let me show you how big this gap really is. Each line is an income group. High-income countries are at the top, low-income at the bottom — and they’ve been pulling apart for twenty years. High-income countries average around 37% inactivity while low-income countries are around 15%. That’s a gap of over 20 percentage points, and it’s getting worse, not better. This pattern tracks with urbanisation and the shift to desk jobs and car-dependent lifestyles.</p>
+<p>Now let me show you how big this gap really is. Look at the chart on the left — each line is an income group, tracked over two decades. High-income countries sit at the top, low-income at the bottom, and they’ve been pulling apart.</p>
+<p>[CLICK] High-income countries average around 37% inactivity.</p>
+<p>[CLICK] Low-income countries? Around 15%.</p>
+<p>[CLICK] That’s a gap of over 20 percentage points — and I want you to sit with that number for a second.</p>
+<p>[CLICK] This gap has been widening for twenty years. It’s not closing. It tracks with urbanisation, the shift to desk jobs, and car-dependent infrastructure.</p>
+<p>[CLICK] This isn’t random variation — it’s structural. The way wealthy economies are built produces inactivity at scale.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1165,7 +1201,7 @@ display:block!important;
 <section id="three-capabilities" class="slide level2">
 <h2>Three Capabilities</h2>
 <div class="columns">
-<div class="column" style="width:33%;">
+<div class="column fragment fade-right" style="width:33%;">
 <h3 id="api-integration">API Integration</h3>
 <ul>
 <li><strong>WHO GHO</strong> OData API with pagination handler</li>
@@ -1174,7 +1210,7 @@ display:block!important;
 <li>5 indicators from 3 sources</li>
 <li>No manual downloads</li>
 </ul>
-</div><div class="column" style="width:33%;">
+</div><div class="column fragment fade-right" style="width:33%;">
 <h3 id="genai-model">GenAI Model</h3>
 <ul>
 <li><strong>Google Gemini</strong> 2.5 Flash Lite</li>
@@ -1183,7 +1219,7 @@ display:block!important;
 <li>Cached by country + data hash + tone</li>
 <li>Functional work, not decoration</li>
 </ul>
-</div><div class="column" style="width:33%;">
+</div><div class="column fragment fade-right" style="width:33%;">
 <h3 id="automation">Automation</h3>
 <ul>
 <li><strong>GitHub Actions</strong> cron every Monday 06:00 UTC</li>
@@ -1194,7 +1230,10 @@ display:block!important;
 </ul>
 </div></div>
 <aside class="notes">
-<p>So I’m targeting all three optional capabilities. For APIs — I built a pagination handler for the WHO API since it can return data in chunks. World Bank and OWID are simpler but still fetched programmatically. For the GenAI piece — when you pick a country, the app sends its actual numbers to Google Gemini and gets back a written summary. You can switch between a policy tone and a general public tone. It caches the results so you’re not hitting the API twice for the same thing. For automation — there’s a GitHub Actions job that runs every Monday. It fetches new data, processes it, and redeploys the app automatically. I don’t have to touch anything.</p>
+<p>The dashboard integrates three technical capabilities. Let me walk through each one.</p>
+<p>[CLICK] First, API integration. The app pulls from three live data sources — WHO, World Bank, and Our World in Data. The WHO API was the trickiest because it paginates results, so I built a handler that loops through all the pages automatically. Nothing is downloaded by hand.</p>
+<p>[CLICK] Second, a generative AI component. When you select a country, the app sends its actual numbers to Google Gemini and gets back a written health brief. You can toggle between a policy tone and a general public tone. Results are cached by country, data hash, and tone — so you’re not hitting the API twice for the same request.</p>
+<p>[CLICK] Third, automation. A GitHub Actions workflow runs every Monday at 6 AM UTC. It fetches fresh data, processes it, and redeploys the app. I don’t have to touch anything — the dashboard stays current on its own.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1261,18 +1300,20 @@ overflow: hidden!important;
 display:block!important;
 }</style></aside>
 </section>
-<section id="live-demo" class="slide level2 center">
-<h2>Live Demo</h2>
+<section id="live-demo" class="slide level2 center" data-auto-animate="true">
+<h2 data-id="quarto-animate-title">Live Demo</h2>
 <p><br><br></p>
-<div class="r-fit-text">
+<div class="r-fit-text fragment fade-down">
 <p><a href="https://ayange.shinyapps.io/couch-economy/">ayange.shinyapps.io/couch-economy</a></p>
 </div>
 <p><br></p>
-<div style="text-align: center; color: #6c757d; font-size: 0.9em;">
+<div class="fragment fade-up" style="text-align: center; color: #6c757d; font-size: 0.9em;">
 <p>Scatter plot | Trend chart | Country briefs | Downloads</p>
 </div>
 <aside class="notes">
-<p>OK let me show you the app live. Up top you can see the value boxes — the correlation number updates as you change filters. Let me hover over some countries in the scatter plot… each bubble is sized by the NCD outcome. If I click on Kuwait here, the trend chart on the right updates to show Kuwait’s data over time. Let me switch the NCD outcome to diabetes — both charts update. Now if I change sex to Female, you can see women are more inactive in most countries. Let me generate a brief for Nigeria — this sends the actual data to Gemini and gets back a written summary. If I switch to general public tone, same data but simpler language. And I can download any of these as a file.</p>
+<p>Now let me show you the real thing.</p>
+<p>[CLICK] Here’s the link — let me switch over to the live app.</p>
+<p>[CLICK] You can see there are four main features: the scatter plot, the trend chart, the AI-generated country briefs, and data downloads. Let me walk through each one. Up top, the value boxes — notice the correlation updates as I change filters. Let me hover over some countries in the scatter plot… each bubble is sized by the NCD outcome. If I click on Kuwait, the trend chart updates to show Kuwait over time. Let me switch to diabetes — both charts respond. Now if I filter to Female, you can see women are more inactive in most countries. Let me generate a brief for Nigeria — this sends the actual data to Gemini and gets back a written summary. Switch to general public tone — same data, simpler language. And any of these can be downloaded as a file.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1344,14 +1385,17 @@ display:block!important;
 <div class="columns">
 <div class="column" style="width:50%;">
 <h3 id="limitations">Limitations</h3>
+<div class="fragment fade-in" data-fragment-index="1">
 <ul>
 <li>WHO inactivity estimates are <strong>modelled</strong>, not directly measured — confidence intervals are wide for some countries</li>
 <li>Gini forward-fill assumes inequality changes slowly — may miss abrupt economic shifts</li>
 <li><strong>Correlation is not causation</strong> — the scatter shows association, not a causal mechanism</li>
 <li>Gemini briefs can occasionally overinterpret sparse data for small countries</li>
 </ul>
+</div>
 </div><div class="column" style="width:50%;">
 <h3 id="future-work">Future Work</h3>
+<div class="fragment fade-in" data-fragment-index="2">
 <ul>
 <li><strong>Regional comparison panel</strong> — compare Sub-Saharan Africa vs Europe side by side</li>
 <li><strong>Time animation</strong> on the scatter plot to show how the paradox has evolved since 2000</li>
@@ -1359,9 +1403,12 @@ display:block!important;
 <li><strong>WHO STEPS microdata</strong> integration for countries with primary survey data</li>
 <li><strong>Confidence interval bands</strong> on the trend chart using WHO’s <code>Low</code> and <code>High</code> columns</li>
 </ul>
+</div>
 </div></div>
 <aside class="notes">
-<p>I want to be upfront about what this can and can’t tell you. The WHO numbers are modelled estimates, not direct measurements, so for some smaller countries the uncertainty is pretty wide. And the big one — correlation is not causation. Just because richer countries are more inactive doesn’t mean money causes inactivity. There are a lot of other things going on — urbanisation, job types, infrastructure. If I had more time, the thing I’d most want to add is a time animation on the scatter plot so you can watch the dots move over 20 years. That would really make the pattern click.</p>
+<p>I want to be upfront about what this can and can’t tell you.</p>
+<p>[CLICK] The WHO numbers are modelled estimates, not direct measurements — so uncertainty is wide for some smaller countries. The Gini data has gaps I had to fill. And the big one: correlation is not causation. Richer countries are more inactive, but that doesn’t mean money directly causes inactivity. Urbanisation, job types, infrastructure — there’s a lot going on.</p>
+<p>[CLICK] If I had more time, the thing I’d most want to add is a time animation on the scatter plot — watching the dots shift over 20 years would really make the pattern click. I’d also love to add country comparisons and confidence interval bands from the WHO data.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1374,8 +1421,8 @@ overflow: hidden!important;
 display:block!important;
 }</style></aside>
 </section>
-<section id="thank-you" class="slide level2 center">
-<h2>Thank You</h2>
+<section id="thank-you" class="slide level2 center" data-auto-animate="true">
+<h2 data-id="quarto-animate-title">Thank You</h2>
 <p><br></p>
 <div class="r-fit-text">
 <p><a href="https://ayange.shinyapps.io/couch-economy/">ayange.shinyapps.io/couch-economy</a></p>
