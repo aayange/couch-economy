@@ -48,27 +48,41 @@ Raw outputs are saved to `data/raw/` as `.rds` files.
 - Anomaly detection: inactivity values more than 3 SD from the mean are flagged in the console log
 - Output saved to `data/processed/couch_economy.rds`
 
-`R/generate_brief.R` handles AI-generated country briefs:
+`R/generate_brief.R` handles AI-generated briefs:
 
-- Data for the selected country is summarised into a structured prompt with key metrics (inactivity trend, GDP, NCD outcomes)
-- Users choose between "policy" (analytical, evidence-focused) and "general public" (plain language, no jargon) tone
-- Prompt sent to Google Gemini (gemini-2.5-flash-lite) via `httr2`
-- Response cached to `data/briefs/` keyed by `country + data hash + tone` — repeat calls are instant
+- **Country briefs** — data for the selected country is summarised into a structured prompt with key metrics (inactivity trend, GDP, NCD outcomes, sex filter). Users choose between "policy" (analytical, evidence-focused) and "general public" (plain language, no jargon) tone.
+- **Comparison briefs** — when 2–3 countries are selected in the Compare tab, a comparative prompt is built with metrics for all selected countries, asking Gemini to highlight differences, explain divergent outcomes, and suggest a policy lesson.
+- All prompts sent to Google Gemini (gemini-2.5-flash-lite) via `httr2`
+- Responses cached to `data/briefs/` keyed by `country(s) + data hash + tone + sex + NCD outcome` — repeat calls are instant
 - Cache invalidated automatically after each weekly data refresh
 
 ### 4. Output
 
-A Shiny app (`app.R`) built with `bslib` (Bootstrap 5) and `plotly`, with two tabs:
+A Shiny app (`app.R`) built with `bslib` (Bootstrap 5) and `plotly`, with five tabs:
 
-**Explorer tab:**
+**Home tab:** Landing page with a visual guide to the dashboard, key stats (195 countries, 2000–2022, 5 data sources), audience descriptions, feature overview cards, and a glossary of key terms.
 
-- **Value boxes** — countries with data, average inactivity rate, average NCD outcome, and GDP-inactivity correlation (Pearson *r*) showing the wealth-inactivity paradox in a single number
-- **Scatter plot** — GDP per capita (log scale) vs. physical inactivity (%), sized by selected NCD outcome, coloured by income group, with an OLS trend line. Click any point to load that country's trend.
-- **Trend chart** — dual y-axis (native plotly) showing inactivity and selected NCD outcome over time for a chosen country, with correct tooltips on each axis
-- **Country brief** — AI-generated 200-word plain-language health analysis with adjustable tone (policy or general public)
-- **Downloads** — scatter plot, trend chart (PNG, 300 dpi), and country brief (TXT) are all downloadable
+**Explorer tab** (three sub-tabs):
 
-**About tab:** data sources, pipeline description, methodology, and course context.
+- **Overview** — value boxes (country count, average inactivity, average NCD outcome, GDP-inactivity correlation with qualitative label), interactive scatter plot (GDP vs. inactivity, sized by NCD outcome, coloured by income group, OLS trend line). Click any bubble to jump to Country Detail.
+- **Year-over-Year** — select two years and view a grouped bar chart showing how inactivity changed. Filter by World Bank income group or view the top 10 countries with the largest absolute change. CSV export included.
+- **Country Detail** — country-level dual-axis trend chart (inactivity + selected NCD outcome over time) and AI-generated 200-word health brief (policy or general audience) powered by Google Gemini. Downloads available for trend chart (PNG) and brief (TXT).
+
+**Compare tab:**
+
+- Select 2–3 countries for head-to-head inactivity trend lines, a data snapshot table, NCD outcome comparison bar chart, and an AI-generated comparative brief via Gemini. CSV export of comparison data included.
+
+**Regions tab:**
+
+- Three value boxes (most/least inactive region, highest NCD burden region)
+- Regional scatter plot (average GDP vs. average inactivity, bubble size = country count)
+- Side-by-side bar charts for inactivity and selected NCD outcome by region
+- Dual-axis trend chart (solid lines for inactivity, dashed for NCD) with a multi-select filter to control which of the seven World Bank regions are displayed
+- Summary table with CSV export
+
+**About tab:** data sources, pipeline description, full feature list, methodology, and course context.
+
+All tabs include CSV data export. The Explorer sidebar provides global filters for income group, sex, NCD outcome, and year.
 
 ### 5. How to Reproduce
 
